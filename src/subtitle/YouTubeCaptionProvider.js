@@ -2145,7 +2145,7 @@ export class YouTubeCaptionProvider {
       getSummaryConfig: () => ({
         summaryApiSlug: this.#setting.summaryApiSlug,
         summaryPromptSlug: this.#setting.summaryPromptSlug,
-        to: this.#setting.toLang || this.#setting.to || "zh-CN",
+        to: this.#setting.toLang || this.#setting.to || "en",
         transApis: this.#setting.transApis || [],
         prompts: this.#setting.prompts || [],
       }),

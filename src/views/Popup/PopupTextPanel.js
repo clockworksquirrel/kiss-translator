@@ -217,7 +217,7 @@ export default function PopupTextPanel({
   transApis = [],
   apiSlugs: initialApiSlugs,
   fromLang: initialFromLang = "auto",
-  toLang: initialToLang = "zh-CN",
+  toLang: initialToLang = "en",
   toLang2 = "-",
   langDetector = "-",
   translateVariants = true,

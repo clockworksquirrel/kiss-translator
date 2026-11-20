@@ -38,7 +38,7 @@ import {
 
 function languageOptions(input, api, nativeOptions = {}) {
   const fromLang = input.sourceLanguage || "auto";
-  const toLang = input.targetLanguage || input.language || "zh-CN";
+  const toLang = input.targetLanguage || input.language || "en";
   const langMap = OPT_LANGS_TO_SPEC[api.apiType] || OPT_LANGS_SPEC_DEFAULT;
   const fromMap = OPT_LANGS_FROM_SPEC[api.apiType] || langMap;
   return {

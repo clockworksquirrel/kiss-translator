@@ -20,6 +20,7 @@ import {
 } from "./prompt";
 import { GLOBAL_KEY } from "./rules";
 import { defaultServices } from "./defaultServices";
+import { PINCHPOINT_API_SLUG } from "./apiConstants";
 import { DEFAULT_CUSTOM_STYLES } from "./styles";
 
 // --- 默认系统快捷键映射 ---
@@ -89,7 +90,7 @@ export const DEFAULT_INPUT_SHORTCUT = ["AltLeft", "KeyI"]; // 触发输入框翻
 export const DEFAULT_INPUT_RULE = {
   transOpen: true, // 是否开启输入框翻译功能
   blacklist: "", // 禁用输入框翻译的域名列表
-  apiSlug: OPT_TRANS_MICROSOFT, // 默认使用的翻译服务 API 标识
+  apiSlug: PINCHPOINT_API_SLUG, // 默认使用的翻译服务 API 标识
   fromLang: "auto", // 默认自动检测输入源语言
   toLang: "en", // 默认翻译目标语言为英文
   triggerShortcut: DEFAULT_INPUT_SHORTCUT, // 快捷键组合
@@ -138,12 +139,12 @@ export const DEFAULT_TRANBOX_SETTING = {
   fontSize: DEFAULT_TRANBOX_FONT_SIZE,
   transOpen: true, // 是否启用划词翻译功能
   blacklist: "", // 划词翻译禁用的域名列表
-  apiSlugs: [OPT_TRANS_MICROSOFT], // 启用的翻译 API (支持多选)
+  apiSlugs: [PINCHPOINT_API_SLUG], // 启用的翻译 API (支持多选)
   contextAwareTranslate: false,
   singleWordNoTrans: false, // 划词为单个单词时是否仅查询词典，不请求整句翻译服务
   autoFavWord: false, // 打开划词翻译框时自动收藏英文单词
   fromLang: "auto",
-  toLang: "zh-CN",
+  toLang: "en",
   toLang2: "en", // 第二目标语言，用于自动反向互译
   promptSlug: "", // 划词翻译提示词，默认为空（跟随接口）
   ttsApiSlug: "", // 云端朗读服务；空字符串使用系统朗读
@@ -188,7 +189,7 @@ export const OPT_ENHANCE_MOBILE_OFF = "mobile_off"; // 移动端浏览器中默�
 // --- 字幕翻译核心配置 ---
 export const DEFAULT_SUBTITLE_SETTING = {
   enabled: true, // 是否自动开启视频字幕翻译功能
-  apiSlug: OPT_TRANS_MICROSOFT, // 默认的字幕翻译接口
+  apiSlug: PINCHPOINT_API_SLUG, // 默认的字幕翻译接口
   segSlug: "-", // 智能 AI 断句/字幕合并的算法选择 ("-" 表示禁用 AI 段落合并)
   forceSubtitleRetranslate: false, // AI 断句服务与翻译服务不同时，是否强制使用翻译服务重翻译文
   chunkLength: 1000, // 新配置默认使用更短 AI 分块；已保存的用户值仍由存储配置优先覆盖
@@ -197,14 +198,14 @@ export const DEFAULT_SUBTITLE_SETTING = {
   preTrans: 90, // 字幕翻译提前发送的时长 (毫秒)，防止接口网络延迟导致字幕不同步
   throttleTrans: 30, // 节流延迟：两次翻译请求的最小时间间隔 (毫秒)
   // fromLang: "en",
-  toLang: "zh-CN", // 字幕译文的目标语言
+  toLang: "en", // 字幕译文的目标语言
   autoTranslate: true, // 是否在获取并解析视频字幕后立即启动翻译
   asrApiSlug: "-", // YouTube 音频识别服务，默认不启用
   youtubeShortsSubtitlePanelWidth: 520,
   audioCacheLimit: 100, // 音频缓存视频数量上限（0-1000，0 表示不缓存，默认 100）
   captionCacheLimit: 100, // YouTube 原始字幕及双语字幕的持久化视频数量，0 表示禁用。
-  isBilingual: true, // 字幕是否启用双语对照显示
-  displayOrder: "original-first", // 字幕双语显示顺序：原文在前或译文在前
+  isBilingual: false, // Josh fork: English only, no original line // 字幕是否启用双语对照显示
+  displayOrder: "translation-first", // 字幕双语显示顺序：原文在前或译文在前
   blurTranslation: false, // 是否模糊显示译文 (用于听力/口语训练)
   skipAd: false, // 是否在识别到 YouTube 广告字幕时进行特殊快进
   windowStyle: SUBTITLE_WINDOW_STYLE, // 字幕背景及定位样式
@@ -276,7 +277,7 @@ export const DEFAULT_MOUSE_HOVER_SETTING = {
   mouseHoverTransMode: OPT_MOUSE_HOVER_TRANS_AREA, // 按住按键触发的翻译范围
   mouseHoverTransDisplay: OPT_MOUSE_HOVER_TRANS_DISPLAY_BLOCK, // 按住按键译文显示方式
   mouseHoverPreventClick: false, // 按住链接/按钮翻译后松开是否阻止点击跳转（仅左键模式，默认关闭）
-  displayMode: OPT_MOUSE_HOVER_DISPLAY_BILINGUAL, // 鼠标悬停翻译展示模式
+  displayMode: OPT_MOUSE_HOVER_DISPLAY_BUBBLE, // 鼠标悬停翻译展示模式
   apiSlug: GLOBAL_KEY, // 气泡模式翻译接口，默认跟随当前网页规则
   bubbleStyle: DEFAULT_MOUSE_HOVER_BUBBLE_STYLE, // 气泡模式的容器 CSS
 };
@@ -284,8 +285,8 @@ export const DEFAULT_MOUSE_HOVER_SETTING = {
 export const DEFAULT_FILE_TRANSLATE_SETTING = {
   pdf: {
     fromLang: "auto",
-    toLang: "zh-CN",
-    apiSlug: OPT_TRANS_MICROSOFT,
+    toLang: "en",
+    apiSlug: PINCHPOINT_API_SLUG,
     promptSlug: "",
     textStyle: "style_none",
     parseMode: "smart",
@@ -299,16 +300,16 @@ export const DEFAULT_FILE_TRANSLATE_SETTING = {
     decisionModel: "laya-multilingual-int8",
   },
   txt: {
-    apiSlug: OPT_TRANS_MICROSOFT,
+    apiSlug: PINCHPOINT_API_SLUG,
     fromLang: "auto",
-    toLang: "zh-CN",
+    toLang: "en",
     promptSlug: "",
     textStyle: "style_none",
   },
   image: {
-    apiSlug: OPT_TRANS_MICROSOFT,
+    apiSlug: PINCHPOINT_API_SLUG,
     fromLang: "auto",
-    toLang: "zh-CN",
+    toLang: "en",
     promptSlug: "",
     vlmPromptSlug: "",
     recognitionService: null,
@@ -316,20 +317,20 @@ export const DEFAULT_FILE_TRANSLATE_SETTING = {
     fontFamily: "default",
   },
   markdown: {
-    apiSlug: OPT_TRANS_MICROSOFT,
+    apiSlug: PINCHPOINT_API_SLUG,
     fromLang: "auto",
-    toLang: "zh-CN",
+    toLang: "en",
     promptSlug: "",
     textStyle: "style_none",
   },
   epub: {
-    apiSlug: OPT_TRANS_MICROSOFT,
+    apiSlug: PINCHPOINT_API_SLUG,
     fromLang: "auto",
-    toLang: "zh-CN",
+    toLang: "en",
     promptSlug: "",
     textStyle: "style_none",
     hasRichText: "true",
-    viewMode: "bilingual",
+    viewMode: "target",
     readerPreferences: {
       pageWidth: 840,
       fontSize: 16,
@@ -342,8 +343,8 @@ export const DEFAULT_FILE_TRANSLATE_SETTING = {
 // --- 图片翻译场景核心配置 ---
 export const DEFAULT_IMAGE_TRANSLATE_SETTING = {
   fromLang: "auto",
-  toLang: "zh-CN",
-  apiSlug: OPT_TRANS_MICROSOFT, // 文本翻译服务 API 标识
+  toLang: "en",
+  apiSlug: PINCHPOINT_API_SLUG, // 文本翻译服务 API 标识
   promptSlug: "", // 翻译提示词
   layoutApiSlug: "", // 布局分析服务 API 标识（为空表示关闭）
   recognitionService: {
@@ -368,7 +369,7 @@ export const DEFAULT_SETTING = {
   httpTimeout: DEFAULT_HTTP_TIMEOUT, // 接口请求超时时间
   clearCache: false, // 每次浏览器重启时，是否自动清空翻译结果的本地网络缓存
   autoTranslateClipboard: false, // 打开文本翻译面板或重新聚焦独立窗口时，是否自动翻译剪贴板文本
-  checkUpdate: true, // 打开设置页面时是否自动检查是否有新版本
+  checkUpdate: false, // Josh fork: no upstream update nags. // 打开设置页面时是否自动检查是否有新版本
   popupDefaultView: OPT_POPUP_DEFAULT_VIEW_PAGE, // 工具栏弹窗打开时默认显示的界面
   injectRules: true, // 页面加载时是否自动匹配并注入云端订阅的翻译规则
   fabClickAction: 0, // 工具栏悬浮球按钮双击或单击的默认响应行为 (如开启/关闭翻译)

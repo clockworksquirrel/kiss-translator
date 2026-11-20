@@ -2614,7 +2614,7 @@ export class YouTubeSubtitleList {
       transcript,
       apiSetting,
       prompt,
-      to: config?.to || "zh-CN",
+      to: config?.to || "en",
     };
   }
 
@@ -2696,7 +2696,7 @@ export class YouTubeSubtitleList {
       sub?.summaryPromptSlug ||
       "default_video_summary";
 
-    const to = fallbackConfig.to || sub?.toLang || sub?.to || "zh-CN";
+    const to = fallbackConfig.to || sub?.toLang || sub?.to || "en";
 
     return {
       summaryApiSlug: finalApiSlug,

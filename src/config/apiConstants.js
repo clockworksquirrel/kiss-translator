@@ -81,6 +81,8 @@ export const OPT_TRANS_OLLAMA = "Ollama"; // 本地部署 Ollama 模型翻译
 export const OPT_TRANS_OPENROUTER = "OpenRouter"; // OpenRouter 多模型聚合 API 翻译
 export const OPT_TRANS_ORCAROUTER = "OrcaRouter"; // OrcaRouter 多模型聚合 API 翻译
 export const OPT_TRANS_REQUESTY = "Requesty"; // Requesty 多模型聚合 API 翻译
+// Josh fork: default service instance (local Qwen3 on PinchPoint)
+export const PINCHPOINT_API_SLUG = "PinchPoint-Local";
 export const OPT_TRANS_CUSTOMIZE = "Custom"; // 自定义翻译 API
 
 // 内置支持的翻译引擎

@@ -171,7 +171,7 @@ export function ImageTranslateSettings({
           <InputLabel>{i18n("to_lang", "目标语言")}</InputLabel>
           <Select
             label={i18n("to_lang", "目标语言")}
-            value={scene.toLang || "zh-CN"}
+            value={scene.toLang || "en"}
             disabled={busy}
             onChange={(e) =>
               onSettingChange?.({ ...scene, toLang: e.target.value })

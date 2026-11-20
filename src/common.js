@@ -13,6 +13,7 @@ import { isInBlacklist } from "./libs/blacklist";
 import { isFabHiddenOnPage } from "./libs/fabVisibility";
 import { createBlacklistStartupRecovery } from "./libs/blacklistStartup";
 import { runSubtitle } from "./subtitle/subtitle";
+import { runGenericSubtitles } from "./subtitle/GenericVideoSubtitles";
 import { logger } from "./libs/log";
 import { injectInlineJs } from "./libs/injector";
 import TranslatorManager from "./libs/translatorManager";
@@ -338,6 +339,12 @@ export async function run(isUserscript = false) {
       transboxOnly: isPdfDocument,
     });
     translatorManager.start();
+
+    // Josh fork: English captions for any <video> on any site, iframes included
+    // (embedded players live in iframes). www.youtube.com keeps its own provider.
+    if (!isPdfDocument && !isUserscript) {
+      runGenericSubtitles({ href, setting: runtimeSetting });
+    }
 
     // 9. 若当前页面是嵌套的 iframe，不进行视频字幕翻译，避免多个 iframe 里重复跑字幕服务造成冲突
     if (isIframe || isPdfDocument) {

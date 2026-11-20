@@ -3,7 +3,7 @@
  * @description 网页翻译规则相关的配置参数。定义匹配选择器、翻译时机、段落切分、生词高亮策略以及兜底和内置的定制网站翻译规则。
  */
 
-import { OPT_TRANS_MICROSOFT } from "./api";
+import { PINCHPOINT_API_SLUG } from "./apiConstants";
 import { OPT_STYLE_NONE } from "./styles";
 
 // --- 规则模式关键字 ---
@@ -137,13 +137,13 @@ export const GLOBLA_RULE = {
   terms: "",
   aiTerms: "",
   termsList: [],
-  apiSlug: OPT_TRANS_MICROSOFT, // 默认采用微软翻译
+  apiSlug: PINCHPOINT_API_SLUG, // Josh fork: local Qwen3 on PinchPoint
   fromLang: "auto", // 默认自动识别原文语言
-  toLang: "zh-CN", // 默认翻译为简体中文
+  toLang: "en", // Josh fork: English
   textStyle: OPT_STYLE_NONE, // 默认译文不加额外线条/高亮背景
   wrapOriginal: "false", // 默认不改变原文 DOM 层级
   originalTextStyle: OPT_STYLE_NONE, // 默认原文不加额外样式
-  transOpen: "false", // 默认不自动开始翻译网页 (需要手动点击或快捷键)
+  transOpen: "true", // Josh fork: auto-translate foreign text on every site (English text is skipped by language detection)
   // bgColor: DEFAULT_COLOR, // 译文颜色 (作废)
   // textDiyStyle: DEFAULT_DIY_STYLE, // 自定义译文样式 (作废)
   textExtStyle: "",
@@ -154,7 +154,7 @@ export const GLOBLA_RULE = {
   grandStyle: "",
   injectJs: "",
   injectCss: "",
-  transOnly: "false", // 默认保留原文，呈现双语对比形式
+  transOnly: "true", // Josh fork: show the English translation only, no original text
   transOnlyRevert: "false",
   transOnlyRevertDelay: "0.5",
   // transTiming: OPT_TIMING_PAGESCROLL, // 翻译时机/鼠标悬停翻译 (暂时作废)
@@ -178,7 +178,7 @@ export const GLOBLA_RULE = {
   splitParagraph: OPT_SPLIT_PARAGRAPH_DISABLE,
   splitLength: 100,
   highlightWords: OPT_HIGHLIGHT_WORDS_DISABLE,
-  transOrder: "original-first", // 文本顺序：原文在上 ("original-first") 或 译文在上 ("translation-first")
+  transOrder: "translation-first", // 文本顺序：原文在上 ("original-first") 或 译文在上 ("translation-first")
   imageTransOpen: "true", // 默认开启网页图片悬停识别
   imageSelector: DEFAULT_IMAGE_SELECTOR,
   imageIgnoreSelector: DEFAULT_IMAGE_IGNORE_SELECTOR,

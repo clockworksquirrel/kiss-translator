@@ -1959,7 +1959,7 @@ export function exportEpubFromChapterStates(
     if (hasAnyTranslated) {
       titleSuffix = mode === "target" ? " [译]" : " [双语对照]";
       toLang =
-        scene?.toLang || options?.toLang || options?.targetLang || "zh-CN";
+        scene?.toLang || options?.toLang || options?.targetLang || "en";
     }
 
     const updatedOpf = updateOpfDocument(rawOpf, {
