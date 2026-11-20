@@ -201,6 +201,7 @@ export const DEFAULT_SUBTITLE_SETTING = {
   toLang: "en", // 字幕译文的目标语言
   autoTranslate: true, // 是否在获取并解析视频字幕后立即启动翻译
   asrApiSlug: "-", // YouTube 音频识别服务，默认不启用
+  liveAsr: true, // Josh fork: live speech-to-text subtitles for videos without captions (local Whisper at 127.0.0.1:8177)
   youtubeShortsSubtitlePanelWidth: 520,
   audioCacheLimit: 100, // 音频缓存视频数量上限（0-1000，0 表示不缓存，默认 100）
   captionCacheLimit: 100, // YouTube 原始字幕及双语字幕的持久化视频数量，0 表示禁用。

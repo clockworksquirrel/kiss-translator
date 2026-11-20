@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.josh.kiss-asr</string>
+<key>ProgramArguments</key><array><string>/usr/bin/python3</string><string>/Users/josh/.local/share/kiss-asr/kiss-asr-server.py</string></array>
+<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
+<key>StandardOutPath</key><string>/Users/josh/Library/Logs/kiss-asr/kiss-asr.log</string>
+<key>StandardErrorPath</key><string>/Users/josh/Library/Logs/kiss-asr/kiss-asr.log</string>
+</dict></plist>

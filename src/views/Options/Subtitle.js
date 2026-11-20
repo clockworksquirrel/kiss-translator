@@ -559,6 +559,7 @@ export default function SubtitleSetting() {
     autoFavWord = false,
     showList = OPT_ENHANCE_MOBILE_OFF,
     skipAd = false,
+    liveAsr = true,
     aiContextSlug = "-",
     segPromptMode = PROMPT_MODE_FOLLOW_API,
     segPromptSlug,
@@ -882,6 +883,17 @@ export default function SubtitleSetting() {
                 onChange={(checked) =>
                   updateSubtitle({ autoTranslate: checked })
                 }
+              />
+            </SettingsRow>
+            <SettingsRow
+              label={i18n("live_speech_subtitles")}
+              description={i18n("live_speech_subtitles_description")}
+            >
+              <SettingsSwitch
+                checked={liveAsr}
+                disabled={!enabled}
+                label={i18n("live_speech_subtitles")}
+                onChange={(checked) => updateSubtitle({ liveAsr: checked })}
               />
             </SettingsRow>
             <SettingsRow label={i18n("is_bilingual_view")}>

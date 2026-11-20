@@ -4,6 +4,9 @@ import { MSG_YOUTUBE_CAPTION_CACHE } from "./config/msg";
 import { writeSiteRule } from "./libs/ruleEditorStorage";
 import {
   MSG_FETCH,
+  MSG_LIVE_ASR,
+  MSG_LIVE_ASR_TOGGLE,
+  CMD_TOGGLE_LIVE_ASR,
   MSG_GET_HTTPCACHE,
   MSG_PUT_HTTPCACHE,
   MSG_TRANS_TOGGLE,
@@ -749,7 +752,39 @@ const handleCaptionCache = captionCacheBackend(browser, async () => {
 });
 const activeImageTasks = new Map();
 
+// Josh fork: local Whisper bridge (kiss-asr LaunchAgent on 127.0.0.1:8177).
+const LIVE_ASR_BASE = "http://127.0.0.1:8177";
+async function liveAsrRequest({ wav, url, start, duration, referer, prompt } = {}) {
+  let res;
+  if (wav) {
+    const bin = Uint8Array.from(atob(wav), (c) => c.charCodeAt(0));
+    res = await fetch(
+      `${LIVE_ASR_BASE}/v1/asr?prompt=${encodeURIComponent(prompt || "")}`,
+      {
+        method: "POST",
+        headers: { "X-Kiss-Asr": "1", "Content-Type": "audio/wav" },
+        body: bin,
+      }
+    );
+  } else if (url) {
+    res = await fetch(`${LIVE_ASR_BASE}/v1/asr-url`, {
+      method: "POST",
+      headers: { "X-Kiss-Asr": "1", "Content-Type": "application/json" },
+      body: JSON.stringify({ url, start, duration, referer, prompt }),
+    });
+  } else {
+    return { error: "no audio" };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return { error: data?.error || `HTTP ${res.status}` };
+  return data;
+}
+
 const messageHandlers = {
+  [MSG_LIVE_ASR]: (args) =>
+    liveAsrRequest(args).catch((err) => ({
+      error: `local speech service unreachable: ${err?.message || err}`,
+    })),
   [MSG_YOUTUBE_CAPTION_CACHE]: handleCaptionCache,
   [MSG_GET_FRAME_ID]: (_args, sender) =>
     Number.isInteger(sender?.frameId) ? sender.frameId : undefined,
@@ -912,6 +947,9 @@ browser.commands?.onCommand?.addListener?.((command) => {
       break;
     case CMD_IMAGE_SCREENSHOT:
       sendTabMsg(MSG_IMAGE_SCREENSHOT);
+      break;
+    case CMD_TOGGLE_LIVE_ASR:
+      sendTabMsg(MSG_LIVE_ASR_TOGGLE);
       break;
     case CMD_OPEN_SEPARATE_WINDOW:
       if (messageHandlers[MSG_OPEN_SEPARATE_WINDOW]) {

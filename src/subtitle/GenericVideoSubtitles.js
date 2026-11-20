@@ -22,6 +22,9 @@ import {
 } from "../config/serviceSelection.js";
 import { DEFAULT_SUBTITLE_SETTING } from "../config/setting.js";
 import { logger } from "../libs/log.js";
+import { browser } from "../libs/browser.js";
+import { MSG_LIVE_ASR_TOGGLE } from "../config/msg.js";
+import { LiveVideoAsr, LIVE_TRACK_LABEL } from "./LiveSpeechSubtitles.js";
 
 const log = logger.child("generic-subtitle");
 
@@ -56,6 +59,37 @@ const GENERIC_CAPTION_SELECTOR =
 const norm = (t) => (t || "").replace(/\s+/g, " ").trim();
 const isEnglishLang = (lang) => /^en\b|^en[-_]/i.test(lang || "");
 
+// Top-level YouTube watch pages: upstream handles captions; live speech
+// subtitles run only when the video has no captions at all.
+export function isYoutubeTop(href) {
+  try {
+    const { hostname, pathname } = new URL(href);
+    return (
+      /(^|\.)youtube\.com$/.test(hostname) &&
+      !pathname.startsWith("/embed") &&
+      window.top === window
+    );
+  } catch {
+    return false;
+  }
+}
+
+function youtubeHasCaptions(video) {
+  const player = video.closest?.(".html5-video-player") || document;
+  const btn = player.querySelector(".ytp-subtitles-button");
+  if (!btn) return false;
+  if (btn.offsetParent === null || getComputedStyle(btn).display === "none")
+    return false;
+  if (btn.getAttribute("aria-disabled") === "true") return false;
+  const t = (
+    btn.getAttribute("data-title-no-tooltip") ||
+    btn.getAttribute("title") ||
+    btn.getAttribute("aria-label") ||
+    ""
+  ).toLowerCase();
+  return !/unavailable|不可用|no disponible/.test(t);
+}
+
 export function shouldRunGenericSubtitles(href) {
   try {
     const { hostname, pathname } = new URL(href);
@@ -83,10 +117,17 @@ class GenericVideoSubtitles {
   #observer = null;
   #pending = new WeakSet();
   #scanTimer = 0;
+  #liveOnly = false;
+  #liveEnabled = true;
+  #liveForced = null; // null = automatic, true/false = user toggled
+  #states = new Set();
+  #lastDomCaptionAt = 0;
 
-  constructor(setting) {
+  constructor(setting, { liveOnly = false } = {}) {
+    this.#liveOnly = liveOnly;
     this.#setting = setting;
     this.#subtitleSetting = setting.subtitleSetting || DEFAULT_SUBTITLE_SETTING;
+    this.#liveEnabled = this.#subtitleSetting.liveAsr !== false;
     this.#toLang = this.#subtitleSetting.toLang || "en";
     const api = availableApiForScene(
       this.#subtitleSetting,
@@ -103,6 +144,13 @@ class GenericVideoSubtitles {
 
   start() {
     this.#scan();
+    try {
+      browser?.runtime?.onMessage?.addListener((msg) => {
+        if (msg?.action !== MSG_LIVE_ASR_TOGGLE) return undefined;
+        this.#toggleLive();
+        return undefined;
+      });
+    } catch {}
     this.#observer = new MutationObserver((records) => this.#onMutations(records));
     this.#observer.observe(document.documentElement, {
       childList: true,
@@ -144,8 +192,20 @@ class GenericVideoSubtitles {
   #attachVideo(video) {
     let state = this.#videos.get(video);
     if (!state) {
-      state = { video, source: null, own: null, domMode: false, done: new Set() };
+      state = {
+        video,
+        source: null,
+        own: null,
+        domMode: false,
+        done: new Set(),
+        live: null,
+        playedMs: 0,
+        lastTick: 0,
+      };
       this.#videos.set(video, state);
+      this.#states.add(state);
+      video.addEventListener("timeupdate", () => this.#maybeLive(state));
+      video.addEventListener("playing", () => this.#maybeLive(state));
       video.textTracks.addEventListener("change", () => this.#pickTrack(state));
       video.textTracks.addEventListener("addtrack", () => this.#pickTrack(state));
       video.addEventListener("timeupdate", () => this.#prefetch(state));
@@ -157,12 +217,69 @@ class GenericVideoSubtitles {
     return Array.from(video.textTracks).filter(
       (t) =>
         (t.kind === "subtitles" || t.kind === "captions") &&
-        t.label !== OWN_TRACK_LABEL
+        t.label !== OWN_TRACK_LABEL &&
+        t.label !== LIVE_TRACK_LABEL
     );
   }
 
+  // ---------- live speech subtitles (no captions needed) ----------
+  #hasCaptionSource(state) {
+    const v = state.video;
+    if (this.#liveOnly) return youtubeHasCaptions(v);
+    if (state.domMode || state.source) return true;
+    if (this.#candidateTracks(v).some((t) => t.mode === "showing")) return true;
+    return Date.now() - this.#lastDomCaptionAt < 8000;
+  }
+
+  #maybeLive(state) {
+    const v = state.video;
+    if (!v.isConnected) {
+      state.live?.stop();
+      this.#states.delete(state);
+      return;
+    }
+    const now = performance.now();
+    if (!v.paused && state.lastTick) state.playedMs += Math.min(1000, now - state.lastTick);
+    state.lastTick = v.paused ? 0 : now;
+    const want =
+      this.#liveForced === true ||
+      (this.#liveForced !== false &&
+        this.#liveEnabled &&
+        !v.paused &&
+        !v.muted &&
+        v.volume > 0 &&
+        v.offsetWidth >= 160 &&
+        v.offsetHeight >= 90 &&
+        state.playedMs >= 1500 &&
+        !this.#hasCaptionSource(state));
+    if (want && !state.live?.running) {
+      state.live =
+        state.live ||
+        new LiveVideoAsr(v, { translate: (t) => this.translate(t) });
+      state.live.start();
+    } else if (!want && state.live?.running && this.#liveForced !== true) {
+      // Real captions showed up (or the user muted / turned it off).
+      if (this.#liveForced === false || this.#hasCaptionSource(state)) state.live.stop();
+    }
+  }
+
+  #toggleLive() {
+    const anyRunning = [...this.#states].some((s) => s.live?.running);
+    this.#liveForced = !anyRunning;
+    this.#states.forEach((s) => {
+      if (this.#liveForced) {
+        if (!s.video.paused || s.video.offsetWidth >= 160) this.#maybeLive(s);
+      } else s.live?.stop();
+    });
+  }
+
+  /** For tests and diagnostics. */
+  liveStats() {
+    return [...this.#states].map((s) => s.live?.stats || null);
+  }
+
   #pickTrack(state) {
-    if (state.domMode) return;
+    if (state.domMode || this.#liveOnly) return;
     const tracks = this.#candidateTracks(state.video);
     if (!tracks.length) return;
     // Prefer the track the user/player turned on; else the first non-English one.
@@ -195,6 +312,7 @@ class GenericVideoSubtitles {
   #onCueChange(state, track) {
     if (track !== state.source || state.domMode) return;
     const active = Array.from(track.activeCues || []);
+    if (active.length) this.#lastDomCaptionAt = Date.now();
     active.forEach((cue) => this.#translateCue(state, cue));
     // Player draws hidden cues itself? Find its caption element by text.
     if (!state.sourceWasShowing && active.length) {
@@ -270,6 +388,15 @@ class GenericVideoSubtitles {
   // ---------- DOM caption path ----------
   #onMutations(records) {
     let sawVideo = false;
+    if (this.#liveOnly) {
+      for (const r of records)
+        r.addedNodes?.forEach((n) => {
+          if (n.nodeType === 1 && (n.tagName === "VIDEO" || n.querySelector?.("video")))
+            sawVideo = true;
+        });
+      if (sawVideo) this.#scan();
+      return;
+    }
     const hasVideo = !!document.querySelector("video");
     for (const r of records) {
       if (r.type === "childList") {
@@ -314,6 +441,7 @@ class GenericVideoSubtitles {
     if (!el || this.#pending.has(el)) return;
     const text = norm(el.innerText || el.textContent);
     if (!text || text.length > 400) return;
+    this.#lastDomCaptionAt = Date.now();
     const prev = this.#captionEls.get(el);
     if (prev && (text === prev.translated || text === norm(prev.translated))) return;
     el.classList.add("notranslate");
@@ -352,9 +480,14 @@ export function runGenericSubtitles({ href, setting }) {
   try {
     const subtitleSetting = setting.subtitleSetting || DEFAULT_SUBTITLE_SETTING;
     if (!subtitleSetting.enabled) return null;
-    if (!shouldRunGenericSubtitles(href)) return null;
-    const runner = new GenericVideoSubtitles(setting);
+    let liveOnly = false;
+    if (!shouldRunGenericSubtitles(href)) {
+      if (!isYoutubeTop(href) || subtitleSetting.liveAsr === false) return null;
+      liveOnly = true;
+    }
+    const runner = new GenericVideoSubtitles(setting, { liveOnly });
     runner.start();
+    if (typeof window !== "undefined") window.__kissGenericSubtitles = runner;
     return runner;
   } catch (err) {
     log.error("generic subtitles failed to start", err);

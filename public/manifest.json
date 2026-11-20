@@ -6,8 +6,8 @@
   "name": "KISS Translator (Josh)",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu3LJtof4K9cXv+salmFT54p/Z1sgKXAo6g723O0nEJANmzQ4ypeVvDoRp+rTDDPxXwYX/r4locLFuYBhlojPeZRHi0SrCSjKZe+J74Bg3P4MUN7XyiZJzs9Ej9yNRYbw+pBjmEWfbVl9hE4rd3T5chVkX2aXK5XtE75lAqFq07xRRcAljUqQdA6PRh52FIekhvjJWet607ngRNUUoa0lchv6VAMlQbxCbvSu1yv1uLrFapVa9l6xEhkj/eq6UkIpi2Y3B1qSYJ4B4Tz4/+AJaUxSTYvUex+bPIYnU0oFzhZYLnYi64qW2PgACtyhVcAt030NA0K+DS/8cKPGotPGlQIDAQAB",
   "description": "__MSG_app_description__",
-  "version": "2.2.6",
-  "version_name": "2.2.6-josh",
+  "version": "2.2.7",
+  "version_name": "2.2.7-josh",
   "default_locale": "en",
   "author": "Gabe<yugang2002@gmail.com>",
   "homepage_url": "https://github.com/fishjar/kiss-translator",
@@ -86,6 +86,9 @@
     },
     "openOptions": {
       "description": "__MSG_open_options__"
+    },
+    "toggleLiveSubtitles": {
+      "description": "Live speech subtitles on/off for this tab"
     }
   },
   "permissions": [
